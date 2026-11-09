@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+
+/* Design tokens de IdeaMatch (extraídos de las pantallas de diseño) */
+@theme {
+  --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #f4f1ff;
+  --color-brand-100: #eeeafd;
+  --color-brand-200: #ddd5fc;
+  --color-brand-300: #c2b3f8;
+  --color-brand-400: #9c84f2;
+  --color-brand-500: #7a5cec;
+  --color-brand-600: #6650e6;
+  --color-brand-700: #5b3fd9;
+  --color-brand-800: #47309f;
+  --color-brand-900: #3b2a7a;
+
+  --color-ink: #1f1d2b;
+  --color-ink-soft: #2b2a3a;
+  --color-muted: #6b6880;
+  --color-subtle: #9a97ab;
+  --color-line: #e7e5ee;
+  --color-surface: #f7f7f9;
+  --color-field: #f9f9fb;
+
+  --color-success-50: #ecf8f2;
+  --color-success-600: #2f9e6e;
+  --color-danger-50: #fdeeee;
+  --color-danger-600: #d14343;
+  --color-warning-500: #f08a4b;
+
+  --shadow-card: 0 1px 2px rgb(31 29 43 / 0.04), 0 4px 16px rgb(31 29 43 / 0.04);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-white font-sans text-ink;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
