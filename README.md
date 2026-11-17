@@ -1,6 +1,9 @@
-# IdeaMatch · Frontend
+# IdeaMatch
 
+Frontend de IdeaMatch, la comunidad donde las ideas encuentran equipo.
 React 19 + TypeScript + Vite + Tailwind CSS v4 + React Router.
+
+La planificación (sprint backlog y contrato de la API para el backend) está en [`docs/`](docs/).
 
 ## Scripts
 
