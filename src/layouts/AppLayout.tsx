@@ -125,12 +125,18 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
       {user && (
         <div className="flex items-center gap-3 border-t border-line px-5 py-4">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-100 text-sm font-bold text-brand-700">
-            {initials}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-sm font-semibold" title={`${user.firstName} ${user.lastName}`}>
-            {user.firstName} {user.lastName}
-          </span>
+          <Link
+            to="/app/perfil"
+            onClick={onNavigate}
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-lg hover:opacity-80 transition-opacity"
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-100 text-sm font-bold text-brand-700">
+              {initials}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold" title={`${user.firstName} ${user.lastName}`}>
+              {user.firstName} {user.lastName}
+            </span>
+          </Link>
           <button
             onClick={handleLogout}
             disabled={leaving}

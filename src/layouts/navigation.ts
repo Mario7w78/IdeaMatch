@@ -52,8 +52,6 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/app/perfil',
     label: 'Mi perfil',
     icon: User,
-    sprint: 2,
-    description: 'Foto, biografía, habilidades, enlaces a tu portafolio y disponibilidad semanal.',
   },
   {
     to: '/app/admin',

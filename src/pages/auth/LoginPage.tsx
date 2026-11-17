@@ -20,8 +20,17 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false)
   const [resent, setResent] = useState(false)
 
+  const isEmailOrTestUser = (val: string) => {
+    const v = val.trim().toLowerCase()
+    return isValidEmail(v) || v === 'user1' || v === 'user2'
+  }
+
   const form = useForm({ email: '', password: '' }, (v) => ({
-    ...(!v.email.trim() ? { email: MESSAGES.required } : !isValidEmail(v.email) ? { email: MESSAGES.email } : {}),
+    ...(!v.email.trim()
+      ? { email: MESSAGES.required }
+      : !isEmailOrTestUser(v.email)
+        ? { email: MESSAGES.email }
+        : {}),
     ...(!v.password ? { password: MESSAGES.required } : {}),
   }))
 
@@ -29,8 +38,14 @@ export function LoginPage() {
     setBusy(true)
     setError(null)
     setResent(false)
+    const emailToUse =
+      email.trim().toLowerCase() === 'user1'
+        ? 'user1@ideamatch.com'
+        : email.trim().toLowerCase() === 'user2'
+          ? 'user2@ideamatch.com'
+          : email
     try {
-      await login(email, password)
+      await login(emailToUse, password)
       navigate(from, { replace: true })
     } catch (e) {
       setError(e instanceof AuthError ? e : new AuthError('INVALID_CREDENTIALS', 'No pudimos iniciar sesión. Intenta de nuevo.'))

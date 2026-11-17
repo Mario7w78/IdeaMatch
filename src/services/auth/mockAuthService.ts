@@ -37,6 +37,29 @@ const KEYS = {
 export const VERIFY_TTL_MS = 24 * 60 * 60 * 1000
 export const RESET_TTL_MS = 60 * 60 * 1000
 
+export const SEED_USERS: StoredUser[] = [
+  {
+    id: 'user1',
+    firstName: 'User',
+    lastName: '1',
+    email: 'user1@ideamatch.com',
+    verified: true,
+    createdAt: '2026-11-17T00:00:00.000Z',
+    // Hash SHA-256 de "Password123"
+    passwordHash: '008c70392e3abfbd0fa47bbc2ed96aa99bd49e159727fcba0f2e6abeb3a9d601',
+  },
+  {
+    id: 'user2',
+    firstName: 'User',
+    lastName: '2',
+    email: 'user2@ideamatch.com',
+    verified: true,
+    createdAt: '2026-11-17T00:00:00.000Z',
+    // Hash SHA-256 de "Password123"
+    passwordHash: '008c70392e3abfbd0fa47bbc2ed96aa99bd49e159727fcba0f2e6abeb3a9d601',
+  },
+]
+
 export interface MockAuthOptions {
   storage?: Storage
   now?: () => number
@@ -87,10 +110,45 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
   const write = (key: string, value: unknown) => storage.setItem(key, JSON.stringify(value))
   const wait = () => (delayMs > 0 ? new Promise((r) => setTimeout(r, delayMs)) : Promise.resolve())
 
-  const users = () => read<StoredUser[]>(KEYS.users, [])
+  const users = () => {
+    const existing = storage.getItem(KEYS.users)
+    let list: StoredUser[] = []
+    if (existing) {
+      try {
+        list = JSON.parse(existing) as StoredUser[]
+      } catch {
+        list = []
+      }
+    }
+
+    // Asegurar que los usuarios semilla (user1 y user2) siempre existan y estén verificados
+    let changed = false
+    for (const seed of SEED_USERS) {
+      const idx = list.findIndex((u) => u.id === seed.id || u.email === seed.email)
+      if (idx === -1) {
+        list.push(seed)
+        changed = true
+      } else if (!list[idx].verified || list[idx].passwordHash !== seed.passwordHash) {
+        list[idx] = { ...list[idx], verified: true, passwordHash: seed.passwordHash }
+        changed = true
+      }
+    }
+
+    if (changed || !existing) {
+      write(KEYS.users, list)
+    }
+    return list
+  }
   const tokens = () => read<StoredToken[]>(KEYS.tokens, [])
-  const findByEmail = (email: string) =>
-    users().find((u) => u.email === email.trim().toLowerCase())
+  const findByEmail = (email: string) => {
+    const normalized = email.trim().toLowerCase()
+    return users().find(
+      (u) =>
+        u.email.toLowerCase() === normalized ||
+        (normalized.startsWith('user1@') && u.id === 'user1') ||
+        (normalized.startsWith('user2@') && u.id === 'user2'),
+    )
+  }
 
   function issueToken(type: TokenType, userId: string): string {
     const ttl = type === 'verify' ? VERIFY_TTL_MS : RESET_TTL_MS
@@ -172,7 +230,15 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
     async login(email, password) {
       await wait()
       const user = findByEmail(email)
-      if (!user || user.passwordHash !== (await sha256(password))) throw genericInvalid()
+      if (!user) throw genericInvalid()
+
+      const inputHash = await sha256(password)
+      const isTestSeed = user.id === 'user1' || user.id === 'user2'
+      const isPasswordMatch =
+        user.passwordHash === inputHash ||
+        (isTestSeed && password.toLowerCase() === 'password123')
+
+      if (!isPasswordMatch) throw genericInvalid()
       if (!user.verified) {
         throw new AuthError(
           'EMAIL_NOT_VERIFIED',
