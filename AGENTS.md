@@ -35,7 +35,7 @@ Como el repositorio es puramente frontend y el backend se desarrollará en otra 
 ## 4. Trazabilidad con el Sprint Backlog
 
 * Cada implementación debe responder a las tareas e historias de usuario definidas en `SPRINT_BACKLOG.md`.
-* Los mensajes de commit y las referencias en el código deben citar el identificador de tarea correspondiente (ejemplo: `[S2-T04]`, `[S3-T08]`).
+* Los mensajes de commit y las referencias en el código deben citar el identificador de tarea correspondiente (ejemplo: `[HU26-BE]`, `[HU11-FE]`, `[TEC-02]`).
 * En cada pantalla desarrollada, reemplazar progresivamente las rutas correspondientes en `src/layouts/navigation.ts` (que actualmente apuntan a `ComingSoonPage`).
 
 ---

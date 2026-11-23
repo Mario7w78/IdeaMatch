@@ -272,7 +272,7 @@ export class MockProfileService implements ProfileService {
   }
 
   async uploadAvatar(userId: string, file: File): Promise<string> {
-    // Validación HU06 / S2-T03: Foto JPG/PNG < 2 MB
+    // Validación HU06 (HU06-BE): Foto JPG/PNG < 2 MB
     const maxSize = 2 * 1024 * 1024 // 2 MB
     if (file.size > maxSize) {
       throw new ProfileError(
