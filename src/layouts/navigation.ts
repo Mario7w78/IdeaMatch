@@ -1,6 +1,7 @@
 import {
   Folder,
   GitMerge,
+  Layers,
   LayoutGrid,
   Mail,
   MessageSquare,
@@ -69,6 +70,12 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/admin/reports',
     label: 'Administración',
     icon: ShieldCheck,
+    adminOnly: true,
+  },
+  {
+    to: '/admin/categories',
+    label: 'Categorías',
+    icon: Layers,
     adminOnly: true,
   },
 ]

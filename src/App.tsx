@@ -9,6 +9,7 @@ import { HomePage } from './pages/app/HomePage'
 import { ContributionsPage } from './pages/app/ContributionsPage'
 import { EmailPreferencesPage } from './pages/app/EmailPreferencesPage'
 import { ProfilePage } from './pages/app/ProfilePage'
+import { CategoriesPage } from './pages/admin/CategoriesPage'
 import { ReportsModerationPage } from './pages/admin/ReportsModerationPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -37,12 +38,14 @@ export function AppRoutes() {
         <Route path="contribuciones" element={<ContributionsPage />} />
         <Route path="notificaciones/correo" element={<EmailPreferencesPage />} />
         <Route path="postulaciones" element={<ApplicationsPage />} />
+        <Route path="categorias" element={<AdminRoute><CategoriesPage /></AdminRoute>} />
         {upcoming.map((item) => (
           <Route key={item.to} path={item.to.replace('/app/', '')} element={<ComingSoonPage item={item} />} />
         ))}
       </Route>
       <Route path="/admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="reports" element={<AdminRoute><ReportsModerationPage /></AdminRoute>} />
+        <Route path="categories" element={<AdminRoute><CategoriesPage /></AdminRoute>} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
