@@ -1,9 +1,10 @@
-import { LoaderCircle, ShieldCheck } from 'lucide-react'
+import { Flag, LoaderCircle, ShieldCheck } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Alert } from '../../components/ui/Alert'
 import { Badge, type BadgeTone } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
+import { ReportModal } from '../../components/reports/ReportModal'
 import { useAuth } from '../../context/useAuth'
 import {
   REPORT_CAUSE_LABELS,
@@ -39,6 +40,7 @@ export function ReportsModerationPage() {
   const [reports, setReports] = useState<Report[] | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [target, setTarget] = useState<Report | null>(null)
+  const [reportModalOpen, setReportModalOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
 
@@ -90,11 +92,22 @@ export function ReportsModerationPage() {
 
   return (
     <div>
-      <p className="text-xs font-semibold tracking-[0.15em] text-brand-700 uppercase">Administración</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight">Moderación de reportes</h1>
-      <p className="mt-3 max-w-2xl text-muted">
-        Revisa los reportes de la comunidad. Al suspender un proyecto, se oculta del público y se avisa a su creador.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.15em] text-brand-700 uppercase">Administración</p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight">Moderación de reportes</h1>
+          <p className="mt-3 max-w-2xl text-muted">
+            Revisa los reportes de la comunidad. Al suspender un proyecto, se oculta del público y se avisa a su creador.
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={() => setReportModalOpen(true)}
+          iconLeft={<Flag size={16} />}
+        >
+          Reportar publicación
+        </Button>
+      </div>
 
       <div role="group" aria-label="Filtrar reportes" className="mt-8 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
@@ -205,6 +218,18 @@ export function ReportsModerationPage() {
           {target?.creatorName}. ¿Quieres continuar?
         </p>
       </Modal>
+
+      <ReportModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        projectId="proj-demo-report"
+        projectTitle="Publicación de Prueba"
+        onSubmitted={async () => {
+          const { list, pending } = await load()
+          setReports(list)
+          setPendingCount(pending)
+        }}
+      />
     </div>
   )
 }

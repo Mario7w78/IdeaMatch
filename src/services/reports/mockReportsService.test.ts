@@ -48,4 +48,59 @@ describe('MockReportsService (HU40)', () => {
     expect(error).toBeInstanceOf(ReportsError)
     expect((error as ReportsError).code).toBe('REPORT_NOT_FOUND')
   })
+
+  describe('HU39 · Crear reporte de proyecto', () => {
+    it('crea un reporte exitosamente y queda en estado pendiente', async () => {
+      const rep = await service.createReport({
+        projectId: 'proj-nuevo',
+        projectTitle: 'Proyecto Sospechoso',
+        reporterId: 'user-reporter',
+        reporterName: 'Denunciante',
+        cause: 'spam',
+        reason: 'Tiene enlaces externos peligrosos.',
+      })
+
+      expect(rep.id).toBeDefined()
+      expect(rep.status).toBe('pending')
+      expect(rep.reason).toBe('Tiene enlaces externos peligrosos.')
+
+      const pending = await service.listReports('pending')
+      expect(pending.some((r) => r.id === rep.id)).toBe(true)
+    })
+
+    it('rechaza un reporte con motivo vacío con: «Proporcione un motivo»', async () => {
+      await expect(
+        service.createReport({
+          projectId: 'proj-nuevo',
+          projectTitle: 'Proyecto Sospechoso',
+          reporterId: 'user-reporter',
+          reporterName: 'Denunciante',
+          cause: 'spam',
+          reason: '   ',
+        }),
+      ).rejects.toThrow('Proporcione un motivo')
+    })
+
+    it('rechaza un reporte repetido con: «Ya registraste un reporte para esta publicación»', async () => {
+      await service.createReport({
+        projectId: 'proj-duplicado',
+        projectTitle: 'Proyecto Duplicado',
+        reporterId: 'user-reporter-dup',
+        reporterName: 'Denunciante',
+        cause: 'spam',
+        reason: 'Primer reporte válido',
+      })
+
+      await expect(
+        service.createReport({
+          projectId: 'proj-duplicado',
+          projectTitle: 'Proyecto Duplicado',
+          reporterId: 'user-reporter-dup',
+          reporterName: 'Denunciante',
+          cause: 'inappropriate',
+          reason: 'Segundo reporte para el mismo proyecto',
+        }),
+      ).rejects.toThrow('Ya registraste un reporte para esta publicación')
+    })
+  })
 })

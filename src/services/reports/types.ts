@@ -28,7 +28,11 @@ export interface Report {
   action?: 'project_suspended'
 }
 
-export type ReportsErrorCode = 'REPORT_NOT_FOUND' | 'ALREADY_HANDLED'
+export type ReportsErrorCode =
+  | 'REPORT_NOT_FOUND'
+  | 'ALREADY_HANDLED'
+  | 'EMPTY_REASON'
+  | 'DUPLICATE_REPORT'
 
 export class ReportsError extends Error {
   readonly code: ReportsErrorCode
@@ -39,6 +43,18 @@ export class ReportsError extends Error {
   }
 }
 
+export interface CreateReportInput {
+  projectId: string
+  projectTitle: string
+  creatorId?: string
+  creatorName?: string
+  creatorEmail?: string
+  reporterId: string
+  reporterName: string
+  cause: ReportCause
+  reason: string
+}
+
 /**
  * Contrato del servicio de reportes y moderación.
  * HU40 (administrador): listar, suspender el proyecto o descartar el reporte.
@@ -47,6 +63,7 @@ export class ReportsError extends Error {
  */
 export interface ReportsService {
   listReports(status?: ReportStatus): Promise<Report[]>
+  createReport(input: CreateReportInput): Promise<Report>
   suspendProject(reportId: string, adminId: string): Promise<Report>
   dismissReport(reportId: string, adminId: string): Promise<Report>
   isProjectSuspended(projectId: string): Promise<boolean>

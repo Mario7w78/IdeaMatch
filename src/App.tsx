@@ -11,6 +11,7 @@ import { EmailPreferencesPage } from './pages/app/EmailPreferencesPage'
 import { ExplorePage } from './pages/app/ExplorePage'
 import { ProfilePage } from './pages/app/ProfilePage'
 import { ProjectDetailPage } from './pages/app/ProjectDetailPage'
+import { CategoriesPage } from './pages/admin/CategoriesPage'
 import { ReportsModerationPage } from './pages/admin/ReportsModerationPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -41,12 +42,14 @@ export function AppRoutes() {
         <Route path="postulaciones" element={<ApplicationsPage />} />
         <Route path="explorar" element={<ExplorePage />} />
         <Route path="proyecto/:id" element={<ProjectDetailPage />} />
+        <Route path="categorias" element={<AdminRoute><CategoriesPage /></AdminRoute>} />
         {upcoming.map((item) => (
           <Route key={item.to} path={item.to.replace('/app/', '')} element={<ComingSoonPage item={item} />} />
         ))}
       </Route>
       <Route path="/admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="reports" element={<AdminRoute><ReportsModerationPage /></AdminRoute>} />
+        <Route path="categories" element={<AdminRoute><CategoriesPage /></AdminRoute>} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

@@ -1,6 +1,7 @@
 import { sendMail } from '../mailbox'
 import {
   ReportsError,
+  type CreateReportInput,
   type Report,
   type ReportStatus,
   type ReportsService,
@@ -103,6 +104,40 @@ export class MockReportsService implements ReportsService {
     const { reports } = this.load()
     const list = status ? reports.filter((r) => r.status === status) : reports
     return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async createReport(input: CreateReportInput): Promise<Report> {
+    const reasonTrimmed = input.reason?.trim() ?? ''
+    if (!reasonTrimmed) {
+      throw new ReportsError('EMPTY_REASON', 'Proporcione un motivo')
+    }
+
+    const store = this.load()
+    const isDuplicate = store.reports.some(
+      (r) => r.projectId === input.projectId && r.reporterId === input.reporterId,
+    )
+    if (isDuplicate) {
+      throw new ReportsError('DUPLICATE_REPORT', 'Ya registraste un reporte para esta publicación')
+    }
+
+    const report: Report = {
+      id: `rep-${crypto.randomUUID()}`,
+      projectId: input.projectId,
+      projectTitle: input.projectTitle,
+      creatorId: input.creatorId ?? 'usr-unknown',
+      creatorName: input.creatorName ?? 'Creador',
+      creatorEmail: input.creatorEmail ?? 'creador@ideamatch.com',
+      reporterId: input.reporterId,
+      reporterName: input.reporterName,
+      cause: input.cause,
+      reason: reasonTrimmed,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    }
+
+    store.reports.unshift(report)
+    this.save(store)
+    return report
   }
 
   async suspendProject(reportId: string, adminId: string): Promise<Report> {
