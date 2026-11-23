@@ -1,3 +1,5 @@
+import type { ProjectStatus } from '../projects/types'
+
 export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
 
 export interface Application {
@@ -27,7 +29,7 @@ export interface ApplicationProject {
   title: string
   category: string
   summary: string
-  status: 'OPEN' | 'IN_PROGRESS' | 'CLOSED'
+  status: ProjectStatus
   roles: ApplicationRole[]
 }
 

@@ -24,13 +24,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/app', label: 'Inicio', icon: LayoutGrid },
-  {
-    to: '/app/explorar',
-    label: 'Explorar',
-    icon: Search,
-    sprint: 4,
-    description: 'Catálogo de proyectos con búsqueda, filtros por categoría y habilidades, y ordenamiento.',
-  },
+  { to: '/app/explorar', label: 'Explorar', icon: Search },
   {
     to: '/app/mis-proyectos',
     label: 'Mis proyectos',

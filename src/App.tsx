@@ -8,7 +8,9 @@ import { ComingSoonPage } from './pages/app/ComingSoonPage'
 import { HomePage } from './pages/app/HomePage'
 import { ContributionsPage } from './pages/app/ContributionsPage'
 import { EmailPreferencesPage } from './pages/app/EmailPreferencesPage'
+import { ExplorePage } from './pages/app/ExplorePage'
 import { ProfilePage } from './pages/app/ProfilePage'
+import { ProjectDetailPage } from './pages/app/ProjectDetailPage'
 import { ReportsModerationPage } from './pages/admin/ReportsModerationPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -37,6 +39,8 @@ export function AppRoutes() {
         <Route path="contribuciones" element={<ContributionsPage />} />
         <Route path="notificaciones/correo" element={<EmailPreferencesPage />} />
         <Route path="postulaciones" element={<ApplicationsPage />} />
+        <Route path="explorar" element={<ExplorePage />} />
+        <Route path="proyecto/:id" element={<ProjectDetailPage />} />
         {upcoming.map((item) => (
           <Route key={item.to} path={item.to.replace('/app/', '')} element={<ComingSoonPage item={item} />} />
         ))}
