@@ -1,6 +1,8 @@
 import {
   Folder,
+  GitMerge,
   LayoutGrid,
+  Mail,
   MessageSquare,
   Search,
   ShieldCheck,
@@ -16,6 +18,8 @@ export interface NavItem {
   /** Sprint en el que se implementa la sección (para las vistas "Próximamente"). */
   sprint?: number
   description?: string
+  /** Solo se muestra a administradores. */
+  adminOnly?: boolean
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -54,11 +58,20 @@ export const NAV_ITEMS: NavItem[] = [
     icon: User,
   },
   {
-    to: '/app/admin',
+    to: '/app/contribuciones',
+    label: 'Contribuciones',
+    icon: GitMerge,
+  },
+  {
+    to: '/app/notificaciones/correo',
+    label: 'Preferencias de correo',
+    icon: Mail,
+  },
+  {
+    to: '/admin/reports',
     label: 'Administración',
     icon: ShieldCheck,
-    sprint: 8,
-    description: 'Moderación de reportes, gestión de categorías e indicadores de la comunidad.',
+    adminOnly: true,
   },
 ]
 

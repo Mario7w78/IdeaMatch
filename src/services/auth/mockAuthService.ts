@@ -44,6 +44,7 @@ export const SEED_USERS: StoredUser[] = [
     lastName: '1',
     email: 'user1@ideamatch.com',
     verified: true,
+    role: 'user',
     createdAt: '2026-11-17T00:00:00.000Z',
     // Hash SHA-256 de "Password123"
     passwordHash: '008c70392e3abfbd0fa47bbc2ed96aa99bd49e159727fcba0f2e6abeb3a9d601',
@@ -54,6 +55,19 @@ export const SEED_USERS: StoredUser[] = [
     lastName: '2',
     email: 'user2@ideamatch.com',
     verified: true,
+    role: 'user',
+    createdAt: '2026-11-17T00:00:00.000Z',
+    // Hash SHA-256 de "Password123"
+    passwordHash: '008c70392e3abfbd0fa47bbc2ed96aa99bd49e159727fcba0f2e6abeb3a9d601',
+  },
+  {
+    // Cuenta de administrador de pruebas (panel de moderación, HU40).
+    id: 'admin1',
+    firstName: 'Admin',
+    lastName: 'IdeaMatch',
+    email: 'admin@ideamatch.com',
+    verified: true,
+    role: 'admin',
     createdAt: '2026-11-17T00:00:00.000Z',
     // Hash SHA-256 de "Password123"
     passwordHash: '008c70392e3abfbd0fa47bbc2ed96aa99bd49e159727fcba0f2e6abeb3a9d601',
@@ -128,8 +142,12 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
       if (idx === -1) {
         list.push(seed)
         changed = true
-      } else if (!list[idx].verified || list[idx].passwordHash !== seed.passwordHash) {
-        list[idx] = { ...list[idx], verified: true, passwordHash: seed.passwordHash }
+      } else if (
+        !list[idx].verified ||
+        list[idx].passwordHash !== seed.passwordHash ||
+        (list[idx].role ?? 'user') !== (seed.role ?? 'user')
+      ) {
+        list[idx] = { ...list[idx], verified: true, passwordHash: seed.passwordHash, role: seed.role }
         changed = true
       }
     }
@@ -203,6 +221,7 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
         lastName: input.lastName.trim(),
         email,
         verified: false,
+        role: 'user',
         createdAt: new Date(now()).toISOString(),
         passwordHash: await sha256(input.password),
       }

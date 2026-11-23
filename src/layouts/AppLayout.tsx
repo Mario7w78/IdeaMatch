@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { buttonClasses } from '../components/ui/buttonClasses'
 import { Logo } from '../components/ui/Logo'
 import { useAuth } from '../context/useAuth'
+import { isAdmin } from '../services/auth'
 import { NAV_ITEMS } from './navigation'
 
 /** Layout autenticado: barra lateral + barra superior (Inicio, Explorar, etc.). */
@@ -104,7 +105,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <nav aria-label="Principal" className="flex-1 overflow-y-auto px-4">
         <ul className="space-y-1">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin(user)).map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <NavLink
                 to={to}

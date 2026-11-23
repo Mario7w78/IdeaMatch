@@ -1,3 +1,5 @@
+export type UserRole = 'user' | 'admin'
+
 export interface User {
   id: string
   firstName: string
@@ -5,7 +7,11 @@ export interface User {
   email: string
   verified: boolean
   createdAt: string
+  /** Ausente en cuentas antiguas: se trata como 'user'. */
+  role?: UserRole
 }
+
+export const isAdmin = (user?: User | null): boolean => user?.role === 'admin'
 
 export interface RegisterInput {
   firstName: string
