@@ -3,6 +3,7 @@ import { DevMailbox } from './components/DevMailbox'
 import { AuthProvider } from './context/AuthContext'
 import { AppLayout } from './layouts/AppLayout'
 import { NAV_ITEMS, PUBLISH_ITEM } from './layouts/navigation'
+import { ApplicationsPage } from './pages/app/ApplicationsPage'
 import { ComingSoonPage } from './pages/app/ComingSoonPage'
 import { HomePage } from './pages/app/HomePage'
 import { ProfilePage } from './pages/app/ProfilePage'
@@ -30,6 +31,7 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="perfil" element={<ProfilePage />} />
         <Route path="perfil/:id" element={<ProfilePage />} />
+        <Route path="postulaciones" element={<ApplicationsPage />} />
         {upcoming.map((item) => (
           <Route key={item.to} path={item.to.replace('/app/', '')} element={<ComingSoonPage item={item} />} />
         ))}

@@ -38,8 +38,6 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/app/postulaciones',
     label: 'Postulaciones',
     icon: Users,
-    sprint: 5,
-    description: 'Sigue el estado de tus postulaciones y revisa a los postulantes de tus proyectos.',
   },
   {
     to: '/app/mensajes',

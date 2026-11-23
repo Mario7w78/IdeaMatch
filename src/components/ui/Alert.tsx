@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 
 const tones = {
   error: { box: 'border-danger-600/25 bg-danger-50 text-danger-600', Icon: CircleAlert },
+  danger: { box: 'border-danger-600/25 bg-danger-50 text-danger-600', Icon: CircleAlert },
+  warning: { box: 'border-amber-500/25 bg-amber-50 text-amber-800', Icon: CircleAlert },
   success: { box: 'border-success-600/25 bg-success-50 text-success-600', Icon: CircleCheck },
   info: { box: 'border-brand-200 bg-brand-50 text-brand-800', Icon: Info },
 }
