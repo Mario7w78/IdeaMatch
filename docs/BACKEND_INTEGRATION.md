@@ -24,13 +24,14 @@ El backend activa la cuenta al registrar. Las pantallas de verificación, reenv�
 | Dominio | Estado |
 | --- | --- |
 | Auth | HTTP cuando se configura `VITE_API_BASE_URL` |
-| HU25, postulaciones recibidas | HTTP en `/app/proyecto/:id/postulaciones` |
-| HU26–HU30, decisiones y equipo | Pendiente de migrar las vistas y servicios |
+| HU25, postulaciones recibidas | HTTP desde `/app/mis-proyectos` hacia `/app/proyecto/:id/postulaciones` |
+| HU26–HU27, aceptar/rechazar | HTTP desde las tarjetas de postulantes; requiere prueba con datos reales |
+| HU28–HU30, equipo | HTTP en `/app/proyecto/:id/equipo`; requiere QA con datos reales |
 | HU41–HU42, contribuciones y herramientas | Requieren acordar y publicar rutas del backend |
 | Proyectos, perfil y postulaciones enviadas | Siguen consumiendo mocks; los IDs semilla no existen en la base real |
 
-Por esa última limitación, el modo API es una integración parcial: para probar HU25 se necesita un proyecto creado en el backend por la cuenta autenticada y una postulación real hecha por otra cuenta. No uses los IDs `proj-*` del mock. El backend valida la propiedad y responde 403 `NOT_OWNER` para otro usuario.
+Por esa última limitación, el modo API es una integración parcial: para probar HU25–HU27 se necesita un proyecto creado en el backend por la cuenta autenticada y una postulación real hecha por otra cuenta. Entra por «Mis proyectos» para usar IDs reales; las tarjetas del catálogo mock siguen usando IDs `proj-*`. El backend valida la propiedad y responde 403 `NOT_OWNER` para otro usuario.
 
 ## Próximo corte de trabajo
 
-Conectar proyectos y perfil al mismo cliente para navegar con IDs reales, y luego incorporar `accept` y `reject` al contrato de `applications`. Después crear el servicio `team` para HU28–HU30. Al cerrar cada HU, probar escenario feliz y alterno con `npm run lint`, `npm test` y `npm run build`.
+El avance por historia del integrante 5 está en `docs/INTEGRANTE_5.md`. Para el resto del proyecto, conectar detalle, catálogo y perfil al mismo cliente; la lista propia ya usa `/me/projects`. Al cerrar cada HU, probar escenario feliz y alterno con `npm run lint`, `npm test` y `npm run build`.

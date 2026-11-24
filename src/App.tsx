@@ -12,6 +12,8 @@ import { ExplorePage } from './pages/app/ExplorePage'
 import { ProfilePage } from './pages/app/ProfilePage'
 import { ProjectDetailPage } from './pages/app/ProjectDetailPage'
 import { ReceivedApplicationsPage } from './pages/app/ReceivedApplicationsPage'
+import { OwnerProjectsPage } from './pages/app/OwnerProjectsPage'
+import { ProjectTeamPage } from './pages/app/ProjectTeamPage'
 import { CategoriesPage } from './pages/admin/CategoriesPage'
 import { ReportsModerationPage } from './pages/admin/ReportsModerationPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -23,7 +25,7 @@ import { LandingPage } from './pages/LandingPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { AdminRoute, ProtectedRoute, PublicOnlyRoute } from './routes/guards'
 
-const upcoming = [...NAV_ITEMS.filter((i) => i.sprint), PUBLISH_ITEM]
+const upcoming = [...NAV_ITEMS.filter((i) => i.sprint && i.to !== '/app/mis-proyectos'), PUBLISH_ITEM]
 
 export function AppRoutes() {
   return (
@@ -41,9 +43,11 @@ export function AppRoutes() {
         <Route path="contribuciones" element={<ContributionsPage />} />
         <Route path="notificaciones/correo" element={<EmailPreferencesPage />} />
         <Route path="postulaciones" element={<ApplicationsPage />} />
+        <Route path="mis-proyectos" element={<OwnerProjectsPage />} />
         <Route path="explorar" element={<ExplorePage />} />
         <Route path="proyecto/:id" element={<ProjectDetailPage />} />
         <Route path="proyecto/:id/postulaciones" element={<ReceivedApplicationsPage />} />
+        <Route path="proyecto/:id/equipo" element={<ProjectTeamPage />} />
         <Route path="categorias" element={<AdminRoute><CategoriesPage /></AdminRoute>} />
         {upcoming.map((item) => (
           <Route key={item.to} path={item.to.replace('/app/', '')} element={<ComingSoonPage item={item} />} />

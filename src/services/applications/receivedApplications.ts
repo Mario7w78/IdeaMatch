@@ -31,6 +31,8 @@ export interface ReceivedApplications {
 
 export interface ReceivedApplicationsService {
   list(projectId: string, roleId?: string): Promise<ReceivedApplications>
+  accept(applicationId: string): Promise<unknown>
+  reject(applicationId: string): Promise<unknown>
 }
 
 export const receivedApplicationsService: ReceivedApplicationsService = {
@@ -39,4 +41,6 @@ export const receivedApplicationsService: ReceivedApplicationsService = {
     if (roleId) query.set('roleId', roleId)
     return apiRequest<ReceivedApplications>(`/projects/${encodeURIComponent(projectId)}/applications?${query}`)
   },
+  accept: (id) => apiRequest(`/applications/${encodeURIComponent(id)}/accept`, { method: 'POST' }),
+  reject: (id) => apiRequest(`/applications/${encodeURIComponent(id)}/reject`, { method: 'POST' }),
 }

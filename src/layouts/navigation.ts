@@ -30,7 +30,6 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/app/mis-proyectos',
     label: 'Mis proyectos',
     icon: Folder,
-    sprint: 3,
     description: 'Edita tus proyectos, cambia su estado y revisa los roles cubiertos y pendientes.',
   },
   {
