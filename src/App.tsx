@@ -11,6 +11,7 @@ import { EmailPreferencesPage } from './pages/app/EmailPreferencesPage'
 import { ExplorePage } from './pages/app/ExplorePage'
 import { ProfilePage } from './pages/app/ProfilePage'
 import { ProjectDetailPage } from './pages/app/ProjectDetailPage'
+import { ReceivedApplicationsPage } from './pages/app/ReceivedApplicationsPage'
 import { CategoriesPage } from './pages/admin/CategoriesPage'
 import { ReportsModerationPage } from './pages/admin/ReportsModerationPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <Route path="postulaciones" element={<ApplicationsPage />} />
         <Route path="explorar" element={<ExplorePage />} />
         <Route path="proyecto/:id" element={<ProjectDetailPage />} />
+        <Route path="proyecto/:id/postulaciones" element={<ReceivedApplicationsPage />} />
         <Route path="categorias" element={<AdminRoute><CategoriesPage /></AdminRoute>} />
         {upcoming.map((item) => (
           <Route key={item.to} path={item.to.replace('/app/', '')} element={<ComingSoonPage item={item} />} />
