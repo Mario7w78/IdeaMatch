@@ -7,6 +7,6 @@ export const httpTeamService: TeamService = {
   leave: (projectId) => apiRequest<void>(`/projects/${encodeURIComponent(projectId)}/leave`, { method: 'POST' }),
   remove: (projectId, userId, reason) => apiRequest<void>(
     `/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(userId)}`,
-    { method: 'DELETE', body: JSON.stringify({ reason: reason.trim() }) },
+    { method: 'DELETE', body: { reason: reason.trim() } },
   ),
 }

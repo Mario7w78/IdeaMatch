@@ -9,6 +9,7 @@ import { categoriesService, type Category } from '../../services/categories'
 type Filter = 'all' | 'active' | 'inactive'
 
 export function CategoriesPage() {
+  const { details, remove } = categoriesService.capabilities
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [categories, setCategories] = useState<Category[] | null>(null)
@@ -40,8 +41,8 @@ export function CategoriesPage() {
       })
       const list = await load()
       setCategories(list)
-    } catch {
-      setFeedback({ tone: 'error', text: 'Error al cambiar el estado.' })
+    } catch (err) {
+      setFeedback({ tone: 'error', text: err instanceof Error ? err.message : 'Error al cambiar el estado.' })
     }
   }
 
@@ -149,7 +150,7 @@ export function CategoriesPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o descripción…"
+            placeholder={details ? 'Buscar por nombre o descripción…' : 'Buscar por nombre…'}
             aria-label="Buscar categorías"
             className="w-full rounded-xl border border-line bg-field py-2 pr-4 pl-9 text-sm text-ink outline-none transition-colors placeholder:text-subtle focus:border-brand-500 focus:bg-white"
           />
@@ -171,7 +172,7 @@ export function CategoriesPage() {
               <thead>
                 <tr className="border-b border-line bg-surface/80 text-xs font-semibold text-muted">
                   <th className="px-6 py-4">Categoría</th>
-                  <th className="px-6 py-4">Descripción</th>
+                  {details && <th className="px-6 py-4">Descripción</th>}
                   <th className="px-6 py-4 text-center">Proyectos</th>
                   <th className="px-6 py-4 text-center">Estado</th>
                   <th className="px-6 py-4 text-right">Acciones</th>
@@ -191,9 +192,11 @@ export function CategoriesPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="max-w-xs px-6 py-4 text-muted">
-                      <p className="line-clamp-2">{cat.description}</p>
-                    </td>
+                    {details && (
+                      <td className="max-w-xs px-6 py-4 text-muted">
+                        <p className="line-clamp-2">{cat.description}</p>
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-center font-medium text-ink">
                       {cat.projectsCount}
                     </td>
@@ -227,14 +230,16 @@ export function CategoriesPage() {
                         >
                           <Power size={16} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(cat)}
-                          className="rounded-lg p-2 text-muted hover:bg-danger-50 hover:text-danger-600 transition-colors"
-                          title="Eliminar categoría"
-                          aria-label={`Eliminar ${cat.name}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {remove && (
+                          <button
+                            onClick={() => handleDelete(cat)}
+                            className="rounded-lg p-2 text-muted hover:bg-danger-50 hover:text-danger-600 transition-colors"
+                            title="Eliminar categoría"
+                            aria-label={`Eliminar ${cat.name}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

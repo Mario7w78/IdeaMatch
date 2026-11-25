@@ -1,62 +1,106 @@
-import { apiRequest, ApiError, readApiSession, saveApiSession } from '../http/apiClient'
+import { ApiError, apiRequest, tokenStore } from '../http/apiClient'
 import { AuthError, type AuthService, type Session, type User } from './types'
 
-type ApiUser = Omit<User, 'verified' | 'role'> & { isAdmin?: boolean }
-const mapUser = (user: ApiUser): User => ({ ...user, verified: true, role: user.isAdmin ? 'admin' : 'user' })
-
-function authError(error: unknown): AuthError {
-  if (error instanceof ApiError) return new AuthError(
-    error.code as AuthError['code'], error.message,
-  )
-  return new AuthError('INVALID_TOKEN', 'No se pudo completar la solicitud.')
+/** Usuario tal como lo devuelve el backend. */
+interface ApiUser {
+  id: string | number
+  firstName: string
+  lastName: string
+  email: string
+  isAdmin: boolean
+  createdAt: string
 }
 
-const unavailable = async (): Promise<never> => {
-  throw new AuthError('INVALID_TOKEN', 'Esta función aún no está disponible en el backend.')
+const toUser = (u: ApiUser): User => ({
+  id: String(u.id),
+  firstName: u.firstName,
+  lastName: u.lastName,
+  email: u.email,
+  // El backend no usa verificación por correo: la cuenta queda activa al registrarse.
+  verified: true,
+  createdAt: u.createdAt,
+  role: u.isAdmin ? 'admin' : 'user',
+})
+
+function toAuthError(err: unknown): never {
+  if (err instanceof ApiError) {
+    if (err.code === 'EMAIL_TAKEN_OR_INVALID')
+      throw new AuthError('EMAIL_TAKEN_OR_INVALID', 'El correo ingresado ya existe o no es válido')
+    if (err.code === 'WEAK_PASSWORD')
+      throw new AuthError('WEAK_PASSWORD', 'Usa al menos 8 caracteres, una mayúscula y un número.')
+    if (err.code === 'INVALID_CREDENTIALS') throw new AuthError('INVALID_CREDENTIALS', 'Credenciales inválidas')
+  }
+  throw err
 }
 
-export const httpAuthService: AuthService = {
-  async register(input) {
-    try {
-      const result = await apiRequest<{ token: string; user: ApiUser }>('/auth/register', {
-        method: 'POST', body: JSON.stringify(input),
-      })
-      // El registro devuelve sesión activa en el backend.
-      saveApiSession({ token: result.token, user: mapUser(result.user) })
-      return mapUser(result.user)
-    } catch (error) { throw authError(error) }
-  },
-  async login(email, password) {
-    try {
-      const result = await apiRequest<{ token: string; user: ApiUser }>('/auth/login', {
-        method: 'POST', body: JSON.stringify({ email, password }),
-      })
-      const session: Session = { token: result.token, user: mapUser(result.user) }
-      saveApiSession(session)
-      return session
-    } catch (error) { throw authError(error) }
-  },
-  async getSession() {
-    const stored = readApiSession() as Session | null
-    if (!stored) return null
-    try {
-      const result = await apiRequest<{ user: ApiUser }>('/auth/me')
-      const session = { token: stored.token, user: mapUser(result.user) }
-      saveApiSession(session)
-      return session
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) saveApiSession(null)
-      if (error instanceof ApiError && error.status === 401) return null
-      // Un fallo de red transitorio no destruye la sesión almacenada.
-      return stored
-    }
-  },
-  async logout() {
-    try { await apiRequest<void>('/auth/logout', { method: 'POST' }) }
-    finally { saveApiSession(null) }
-  },
-  verifyEmail: unavailable,
-  resendVerification: unavailable,
-  requestPasswordReset: unavailable,
-  resetPassword: unavailable,
+const unsupported = () =>
+  new AuthError('INVALID_TOKEN', 'Esta función aún no está disponible en el servidor.')
+
+/** Implementación contra el backend real (`/api/auth/*`). */
+export function createHttpAuthService(): AuthService {
+  return {
+    async register(input) {
+      try {
+        // La cuenta queda activa, pero no se abre sesión: el usuario inicia sesión después.
+        const res = await apiRequest<{ user: ApiUser }>('/auth/register', {
+          method: 'POST',
+          auth: false,
+          body: input,
+        })
+        return toUser(res.user)
+      } catch (err) {
+        toAuthError(err)
+      }
+    },
+
+    async login(email, password) {
+      try {
+        const res = await apiRequest<{ token: string; user: ApiUser }>('/auth/login', {
+          method: 'POST',
+          auth: false,
+          body: { email: email.trim(), password },
+        })
+        tokenStore.set(res.token)
+        return { token: res.token, user: toUser(res.user) }
+      } catch (err) {
+        toAuthError(err)
+      }
+    },
+
+    async logout() {
+      try {
+        await apiRequest<void>('/auth/logout', { method: 'POST' })
+      } catch {
+        /* aunque el servidor falle, la sesión local se cierra */
+      } finally {
+        tokenStore.clear()
+      }
+    },
+
+    async getSession(): Promise<Session | null> {
+      const token = tokenStore.get()
+      if (!token) return null
+      try {
+        const res = await apiRequest<{ user: ApiUser }>('/auth/me')
+        return { token, user: toUser(res.user) }
+      } catch (err) {
+        // Solo una sesión rechazada la invalida; un fallo de red no cierra la sesión.
+        if (err instanceof ApiError && err.status === 401) tokenStore.clear()
+        return null
+      }
+    },
+
+    async verifyEmail() {
+      throw unsupported()
+    },
+    async resendVerification() {
+      /* el backend no verifica correos */
+    },
+    async requestPasswordReset() {
+      /* sin endpoint: respuesta genérica, como pide la HU4 */
+    },
+    async resetPassword() {
+      throw unsupported()
+    },
+  }
 }

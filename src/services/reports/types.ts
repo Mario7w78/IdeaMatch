@@ -1,10 +1,10 @@
-export type ReportCause = 'spam' | 'inappropriate' | 'misleading' | 'other'
+export type ReportCause = 'spam' | 'contenido_enganoso' | 'propiedad_intelectual' | 'otro'
 
 export const REPORT_CAUSE_LABELS: Record<ReportCause, string> = {
   spam: 'Spam',
-  inappropriate: 'Contenido inapropiado',
-  misleading: 'Información engañosa',
-  other: 'Otro motivo',
+  contenido_enganoso: 'Contenido engañoso o inapropiado',
+  propiedad_intelectual: 'Propiedad intelectual',
+  otro: 'Otro motivo',
 }
 
 export type ReportStatus = 'pending' | 'resolved' | 'dismissed'
@@ -33,6 +33,7 @@ export type ReportsErrorCode =
   | 'ALREADY_HANDLED'
   | 'EMPTY_REASON'
   | 'DUPLICATE_REPORT'
+  | 'OWN_PROJECT'
 
 export class ReportsError extends Error {
   readonly code: ReportsErrorCode
@@ -67,4 +68,6 @@ export interface ReportsService {
   suspendProject(reportId: string, adminId: string): Promise<Report>
   dismissReport(reportId: string, adminId: string): Promise<Report>
   isProjectSuspended(projectId: string): Promise<boolean>
+  /** Restablece los datos de prueba (solo tiene efecto en el servicio simulado). */
+  reset(): void
 }

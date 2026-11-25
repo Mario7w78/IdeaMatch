@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Alert } from '../../components/ui/Alert'
-import { API_BASE_URL } from '../../services/http/apiClient'
+import { isApiEnabled } from '../../services/http/apiClient'
 import { ownerProjectsService, type OwnerProject } from '../../services/projects/ownerProjects'
 
 export function OwnerProjectsPage() {
@@ -9,7 +9,7 @@ export function OwnerProjectsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   useEffect(() => {
-    if (!API_BASE_URL) return
+    if (!isApiEnabled()) return
     let active = true
     ownerProjectsService.list().then((items) => { if (active) setProjects(items) })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : 'No se pudieron cargar los proyectos.') })
@@ -18,9 +18,9 @@ export function OwnerProjectsPage() {
   }, [])
   return <section className="space-y-6">
     <div><h1 className="text-3xl font-bold">Mis proyectos</h1><p className="mt-2 text-muted">Gestiona las postulaciones de tus proyectos publicados.</p></div>
-    {!API_BASE_URL ? <Alert tone="error">Configura VITE_API_BASE_URL para consultar tus proyectos del backend.</Alert> : null}
+    {!isApiEnabled() ? <Alert tone="error">Configura VITE_API_URL para consultar tus proyectos del backend.</Alert> : null}
     {error && <Alert tone="error">{error}</Alert>}
-    {loading && API_BASE_URL && <p role="status">Cargando proyectos…</p>}
+    {loading && isApiEnabled() && <p role="status">Cargando proyectos…</p>}
     {!loading && !error && projects.length === 0 && <p className="rounded-2xl border border-line bg-white p-8 text-center text-muted">Todavía no tienes proyectos en el backend.</p>}
     <ul className="grid gap-4 md:grid-cols-2">{projects.map((project) => <li key={project.id} className="rounded-2xl border border-line bg-white p-6">
       <h2 className="text-xl font-bold">{project.name}</h2>

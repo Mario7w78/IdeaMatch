@@ -10,7 +10,7 @@ import { useForm } from '../../hooks/useForm'
 import { AuthLayout, FeatureList } from '../../layouts/AuthLayout'
 import { isValidEmail, isValidPassword, MESSAGES } from '../../lib/validation'
 import { AuthError } from '../../services/auth'
-import { API_BASE_URL } from '../../services/http/apiClient'
+import { isApiEnabled } from '../../services/http/apiClient'
 
 const PANEL = {
   badge: 'ÚNETE A LA COMUNIDAD',
@@ -169,7 +169,7 @@ function RegisterSuccess({ email, onResend }: { email: string; onResend: () => P
         <MailCheck size={28} aria-hidden="true" />
       </span>
       <h1 className="mt-6 text-4xl font-bold tracking-tight">¡Tu cuenta fue creada!</h1>
-      <p className="mt-4 text-muted">{API_BASE_URL
+      <p className="mt-4 text-muted">{isApiEnabled()
         ? <>La cuenta <strong className="text-ink">{email}</strong> está lista. Ya puedes iniciar sesión.</>
         : <>Enviamos un enlace de activación a <strong className="text-ink">{email}</strong>. Ábrelo en las próximas 24 horas para verificar tu correo y poder iniciar sesión.</>}
       </p>
@@ -177,7 +177,7 @@ function RegisterSuccess({ email, onResend }: { email: string; onResend: () => P
         <ButtonLink to="/login" size="lg">
           Ir a iniciar sesión
         </ButtonLink>
-        {!API_BASE_URL && <Button
+        {!isApiEnabled() && <Button
           variant="secondary"
           size="lg"
           loading={state === 'sending'}

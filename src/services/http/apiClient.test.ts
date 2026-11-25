@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiRequest, ApiError, saveApiSession } from './apiClient'
+import { apiRequest, ApiError, tokenStore } from './apiClient'
 
 describe('cliente HTTP transversal', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => vi.unstubAllGlobals())
 
   it('envía JWT Bearer y JSON al backend', async () => {
-    saveApiSession({ token: 'jwt-prueba', user: { id: '1' } })
+    tokenStore.set('jwt-prueba')
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    expect(await apiRequest<{ ok: boolean }>('/projects/1/applications', { method: 'POST', body: '{}' })).toEqual({ ok: true })
+    expect(await apiRequest<{ ok: boolean }>('/projects/1/applications', { method: 'POST', body: {} })).toEqual({ ok: true })
     const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toMatch(/\/api\/projects\/1\/applications$/)
     expect(new Headers(request.headers).get('Authorization')).toBe('Bearer jwt-prueba')

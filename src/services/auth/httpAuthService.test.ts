@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { httpAuthService } from './httpAuthService'
-import { readApiSession } from '../http/apiClient'
+import { createHttpAuthService } from './httpAuthService'
+import { tokenStore } from '../http/apiClient'
+
+const httpAuthService = createHttpAuthService()
 
 describe('autenticación HTTP', () => {
   beforeEach(() => localStorage.clear())
@@ -12,15 +14,15 @@ describe('autenticación HTTP', () => {
     }), { status: 200 })))
     const session = await httpAuthService.login('ana@example.com', 'Password123')
     expect(session.user.role).toBe('admin')
-    expect(readApiSession()?.token).toBe('jwt-real')
+    expect(tokenStore.get()).toBe('jwt-real')
   })
 
   it('borra la sesión cuando /auth/me responde 401', async () => {
     vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'jwt-real', user: { id: '1', firstName: 'Ana', lastName: 'Ruiz', email: 'ana@example.com' } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'jwt-real', user: { id: '1', firstName: 'Ana', lastName: 'Ruiz', email: 'ana@example.com', isAdmin: false, createdAt: '2026-11-24' } }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'UNAUTHORIZED', message: 'Expiró' }), { status: 401 })))
     await httpAuthService.login('ana@example.com', 'Password123')
     expect(await httpAuthService.getSession()).toBeNull()
-    expect(readApiSession()).toBeNull()
+    expect(tokenStore.get()).toBeNull()
   })
 })

@@ -37,9 +37,9 @@ export interface ReceivedApplicationsService {
 
 export const receivedApplicationsService: ReceivedApplicationsService = {
   list(projectId, roleId) {
-    const query = new URLSearchParams({ status: 'pendiente', sort: 'match', page: '1', limit: '50' })
-    if (roleId) query.set('roleId', roleId)
-    return apiRequest<ReceivedApplications>(`/projects/${encodeURIComponent(projectId)}/applications?${query}`)
+    return apiRequest<ReceivedApplications>(`/projects/${encodeURIComponent(projectId)}/applications`, {
+      query: { status: 'pendiente', sort: 'match', page: 1, limit: 50, roleId },
+    })
   },
   accept: (id) => apiRequest(`/applications/${encodeURIComponent(id)}/accept`, { method: 'POST' }),
   reject: (id) => apiRequest(`/applications/${encodeURIComponent(id)}/reject`, { method: 'POST' }),

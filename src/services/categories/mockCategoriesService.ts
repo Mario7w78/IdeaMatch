@@ -88,6 +88,8 @@ function slugify(text: string): string {
 }
 
 export class MockCategoriesService implements CategoriesService {
+  readonly capabilities = { details: true, remove: true }
+
   private load(): Category[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)

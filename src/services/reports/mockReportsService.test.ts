@@ -97,7 +97,7 @@ describe('MockReportsService (HU40)', () => {
           projectTitle: 'Proyecto Duplicado',
           reporterId: 'user-reporter-dup',
           reporterName: 'Denunciante',
-          cause: 'inappropriate',
+          cause: 'contenido_enganoso',
           reason: 'Segundo reporte para el mismo proyecto',
         }),
       ).rejects.toThrow('Ya registraste un reporte para esta publicación')

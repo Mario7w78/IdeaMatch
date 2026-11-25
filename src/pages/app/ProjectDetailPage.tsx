@@ -14,7 +14,7 @@ import { initialsOf, timeAgo } from '../../lib/format'
 import { applicationService } from '../../services/applications'
 import { profileService } from '../../services/profile'
 import { openVacancies, projectsService, teamSize, type Project } from '../../services/projects'
-import { API_BASE_URL } from '../../services/http/apiClient'
+import { isApiEnabled } from '../../services/http/apiClient'
 
 /** HU17: página completa de un proyecto. Para el creador, incluye el cambio de estado (HU14). */
 export function ProjectDetailPage() {
@@ -198,7 +198,7 @@ export function ProjectDetailPage() {
             )}
             <hr className="my-5 border-line" />
             <h2 className="text-base font-bold">Equipo actual</h2>
-            {API_BASE_URL && isCreator && <Link to={`/app/proyecto/${project.id}/postulaciones`} className="mt-3 inline-block text-sm font-semibold text-brand-700 hover:underline">Ver postulaciones recibidas</Link>}
+            {isApiEnabled() && isCreator && <Link to={`/app/proyecto/${project.id}/postulaciones`} className="mt-3 inline-block text-sm font-semibold text-brand-700 hover:underline">Ver postulaciones recibidas</Link>}
             <div className="mt-3 flex items-center justify-between">
               <TeamAvatars names={team} />
               <span className="text-xs text-muted">{teamSize(project)} integrantes</span>

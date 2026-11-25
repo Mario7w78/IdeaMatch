@@ -27,7 +27,7 @@ No se ha cambiado la UI ni el servicio de chat, notificaciones, categorías, rep
 
 ## Prueba sugerida para el equipo
 
-1. Configurar `VITE_API_BASE_URL` según `docs/BACKEND_INTEGRATION.md` e iniciar sesión como creador.
+1. Configurar `VITE_API_URL` según `docs/BACKEND_INTEGRATION.md` e iniciar sesión como creador.
 2. Abrir «Mis proyectos», entrar a postulaciones y equipo. Crear un proyecto real y postular desde otra cuenta si no existen datos.
 3. Aceptar una postulación y comprobar que aparece en el equipo. Desde la cuenta colaboradora, salir; verificar que desaparece de la lista.
 4. Repetir con otra postulación, aceptar y cancelar primero el modal de remoción: el miembro debe permanecer. Luego indicar motivo, confirmar y comprobar que desaparece.

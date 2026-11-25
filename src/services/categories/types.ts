@@ -29,6 +29,7 @@ export type CategoryErrorCode =
   | 'DESCRIPTION_REQUIRED'
   | 'NAME_TAKEN'
   | 'CATEGORY_NOT_FOUND'
+  | 'NOT_SUPPORTED'
 
 export class CategoryError extends Error {
   readonly code: CategoryErrorCode
@@ -44,7 +45,16 @@ export interface CategoryFilter {
   search?: string
 }
 
+/** Qué operaciones soporta la fuente de datos (el backend real es más acotado que el simulado). */
+export interface CategoriesCapabilities {
+  /** Descripción y color de cada categoría. */
+  details: boolean
+  /** Eliminación definitiva (el backend solo permite inactivar). */
+  remove: boolean
+}
+
 export interface CategoriesService {
+  readonly capabilities: CategoriesCapabilities
   getCategories(filter?: CategoryFilter): Promise<Category[]>
   getCategoryById(id: string): Promise<Category | null>
   createCategory(input: CreateCategoryInput): Promise<Category>

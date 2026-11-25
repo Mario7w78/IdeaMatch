@@ -87,7 +87,7 @@ export function ReportsModerationPage() {
     target &&
     run(
       () => reportsService.suspendProject(target.id, adminId),
-      `Proyecto «${target.projectTitle}» suspendido. Se notificó a ${target.creatorName}.`,
+      `Proyecto «${target.projectTitle}» suspendido. Se notificó a ${target.creatorName || 'su creador'}.`,
     )
 
   return (
@@ -159,7 +159,12 @@ export function ReportsModerationPage() {
                 <div className="min-w-0">
                   <h2 className="text-lg font-bold">{r.projectTitle}</h2>
                   <p className="mt-1 text-sm text-muted">
-                    Creador: <span className="font-medium text-ink">{r.creatorName}</span> · Reportado por{' '}
+                    {r.creatorName && (
+                      <>
+                        Creador: <span className="font-medium text-ink">{r.creatorName}</span> ·{' '}
+                      </>
+                    )}
+                    Reportado por{' '}
                     <span className="font-medium text-ink">{r.reporterName}</span> · {formatDate(r.createdAt)}
                   </p>
                 </div>
@@ -215,7 +220,7 @@ export function ReportsModerationPage() {
       >
         <p className="text-[15px]">
           El proyecto <strong>«{target?.projectTitle}»</strong> se ocultará del público y se avisará a{' '}
-          {target?.creatorName}. ¿Quieres continuar?
+          {target?.creatorName || 'su creador'}. ¿Quieres continuar?
         </p>
       </Modal>
 

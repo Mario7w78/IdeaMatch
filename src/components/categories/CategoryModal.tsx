@@ -50,6 +50,7 @@ function CategoryForm({
   onClose: () => void
   onSaved?: (category: Category) => void
 }) {
+  const { details } = categoriesService.capabilities
   const [name, setName] = useState(categoryToEdit?.name ?? '')
   const [description, setDescription] = useState(categoryToEdit?.description ?? '')
   const [color, setColor] = useState(categoryToEdit?.color ?? 'indigo')
@@ -65,7 +66,7 @@ function CategoryForm({
       setError('El nombre de la categoría es obligatorio.')
       return
     }
-    if (!description.trim()) {
+    if (details && !description.trim()) {
       setError('La descripción de la categoría es obligatoria.')
       return
     }
@@ -120,6 +121,7 @@ function CategoryForm({
         autoFocus
       />
 
+      {details && (
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label htmlFor="cat-desc" className="text-sm font-semibold text-ink">
@@ -138,7 +140,9 @@ function CategoryForm({
           className="w-full rounded-xl border border-line bg-field p-3.5 text-sm text-ink outline-none transition-colors placeholder:text-subtle focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100"
         />
       </div>
+      )}
 
+      {details && (
       <div>
         <label className="mb-2 block text-sm font-semibold text-ink">Paleta y distintivo</label>
         <div className="flex flex-wrap gap-2">
@@ -156,6 +160,7 @@ function CategoryForm({
           ))}
         </div>
       </div>
+      )}
 
       <div className="flex items-center gap-3 pt-1">
         <input

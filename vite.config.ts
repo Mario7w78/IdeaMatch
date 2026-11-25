@@ -10,5 +10,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Las pruebas siempre usan los servicios simulados, aunque exista un .env con VITE_API_URL.
+    env: { VITE_API_URL: '' },
   },
 })

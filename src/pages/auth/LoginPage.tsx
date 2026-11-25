@@ -9,7 +9,7 @@ import { useForm } from '../../hooks/useForm'
 import { AuthLayout } from '../../layouts/AuthLayout'
 import { isValidEmail, MESSAGES } from '../../lib/validation'
 import { AuthError } from '../../services/auth'
-import { API_BASE_URL } from '../../services/http/apiClient'
+import { isApiEnabled } from '../../services/http/apiClient'
 import { LOGIN_PANEL } from './copy'
 
 export function LoginPage() {
@@ -68,7 +68,7 @@ export function LoginPage() {
         {error && (
           <Alert tone="error">
             {error.message}
-            {error.code === 'EMAIL_NOT_VERIFIED' && !resent && !API_BASE_URL && (
+            {error.code === 'EMAIL_NOT_VERIFIED' && !resent && !isApiEnabled() && (
               <>
                 {' '}
                 <button type="button" onClick={resend} className="font-semibold underline underline-offset-2">
@@ -95,7 +95,7 @@ export function LoginPage() {
           autoComplete="current-password"
           placeholder="Ingresa tu contraseña"
           labelAction={
-            !API_BASE_URL && <Link to="/recuperar" className="text-sm font-semibold text-brand-700 hover:underline">¿Olvidaste tu contraseña?</Link>
+            !isApiEnabled() && <Link to="/recuperar" className="text-sm font-semibold text-brand-700 hover:underline">¿Olvidaste tu contraseña?</Link>
           }
           {...form.field('password')}
         />
