@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { readMailbox } from '../mailbox'
-import { createMockAuthService, RESET_TTL_MS, VERIFY_TTL_MS } from './mockAuthService'
+import { CODE_TTL_MS, createMockAuthService, MAX_CODE_ATTEMPTS, RESET_TTL_MS, VERIFY_TTL_MS } from './mockAuthService'
 import type { AuthService } from './types'
 
 const ana = { firstName: 'Ana', lastName: 'Cárdenas', email: 'ana@correo.com', password: 'Ideas2026' }
@@ -67,6 +67,42 @@ describe('HU02 · Verificación de correo', () => {
   })
 })
 
+describe('HU02-FE · Verificación con código de 6 dígitos', () => {
+  const codeFrom = () => readMailbox()[0].code!
+
+  it('envía un código de 6 dígitos que activa la cuenta y deja la sesión iniciada', async () => {
+    await auth.register(ana)
+    expect(codeFrom()).toMatch(/^\d{6}$/)
+    const session = await auth.verifyEmailCode('ANA@correo.com', codeFrom())
+    expect(session.user.verified).toBe(true)
+    expect((await auth.getSession())?.user.email).toBe(ana.email)
+    // La cuenta ya puede iniciar sesión normalmente.
+    expect((await auth.login(ana.email, ana.password)).user.verified).toBe(true)
+  })
+
+  it('un código incorrecto descuenta intentos y al agotarlos lo invalida', async () => {
+    await auth.register(ana)
+    const code = codeFrom()
+    const wrong = code === '000000' ? '111111' : '000000'
+    await expect(auth.verifyEmailCode(ana.email, wrong)).rejects.toMatchObject({
+      code: 'INVALID_CODE',
+      attemptsLeft: MAX_CODE_ATTEMPTS - 1,
+    })
+    for (let i = 1; i < MAX_CODE_ATTEMPTS; i++) await auth.verifyEmailCode(ana.email, wrong).catch(() => {})
+    await expect(auth.verifyEmailCode(ana.email, code)).rejects.toMatchObject({ code: 'INVALID_CODE' })
+    await expect(auth.login(ana.email, ana.password)).rejects.toMatchObject({ code: 'EMAIL_NOT_VERIFIED' })
+  })
+
+  it('rechaza códigos vencidos (> 15 min) y reenviar entrega uno nuevo', async () => {
+    await auth.register(ana)
+    const old = codeFrom()
+    clock += CODE_TTL_MS + 1
+    await expect(auth.verifyEmailCode(ana.email, old)).rejects.toMatchObject({ code: 'INVALID_CODE' })
+    await auth.resendVerification(ana.email)
+    await expect(auth.verifyEmailCode(ana.email, codeFrom())).resolves.toMatchObject({ user: { verified: true } })
+  })
+})
+
 describe('HU03 · Inicio de sesión', () => {
   it('inicia sesión con correo verificado y contraseña correcta', async () => {
     await registerAndVerify()
@@ -109,6 +145,39 @@ describe('HU04 · Recuperación de contraseña', () => {
     await expect(auth.resetPassword(tokenFrom(readMailbox()[0].link), 'Nueva2026')).rejects.toMatchObject({
       code: 'INVALID_TOKEN',
     })
+  })
+})
+
+describe('HU04-FE · Recuperación con código de 6 dígitos', () => {
+  const codeFrom = () => readMailbox()[0].code!
+
+  it('cambia la contraseña con el código y la anterior deja de servir', async () => {
+    await registerAndVerify()
+    await auth.requestPasswordReset(ana.email)
+    expect(codeFrom()).toMatch(/^\d{6}$/)
+    await auth.resetPasswordWithCode(ana.email, codeFrom(), 'Nueva2026')
+    await expect(auth.login(ana.email, ana.password)).rejects.toThrow('Credenciales inválidas')
+    expect((await auth.login(ana.email, 'Nueva2026')).user.email).toBe(ana.email)
+  })
+
+  it('una contraseña débil no gasta intentos y un código incorrecto sí', async () => {
+    await registerAndVerify()
+    await auth.requestPasswordReset(ana.email)
+    const code = codeFrom()
+    await expect(auth.resetPasswordWithCode(ana.email, code, 'debil')).rejects.toMatchObject({ code: 'WEAK_PASSWORD' })
+    const wrong = code === '000000' ? '111111' : '000000'
+    await expect(auth.resetPasswordWithCode(ana.email, wrong, 'Nueva2026')).rejects.toMatchObject({
+      code: 'INVALID_CODE',
+      attemptsLeft: MAX_CODE_ATTEMPTS - 1,
+    })
+    await expect(auth.resetPasswordWithCode(ana.email, code, 'Nueva2026')).resolves.toBeUndefined()
+  })
+
+  it('también confirma el correo de una cuenta pendiente', async () => {
+    await auth.register(ana)
+    await auth.requestPasswordReset(ana.email)
+    await auth.resetPasswordWithCode(ana.email, codeFrom(), 'Nueva2026')
+    expect((await auth.login(ana.email, 'Nueva2026')).user.verified).toBe(true)
   })
 })
 

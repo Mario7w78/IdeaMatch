@@ -9,17 +9,15 @@ import { useForm } from '../../hooks/useForm'
 import { AuthLayout } from '../../layouts/AuthLayout'
 import { isValidEmail, MESSAGES } from '../../lib/validation'
 import { AuthError } from '../../services/auth'
-import { isApiEnabled } from '../../services/http/apiClient'
-import { LOGIN_PANEL } from './copy'
+import { LOGIN_PANEL, type VerifyCodeState } from './copy'
 
 export function LoginPage() {
-  const { login, service } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? '/app'
   const [error, setError] = useState<AuthError | null>(null)
   const [busy, setBusy] = useState(false)
-  const [resent, setResent] = useState(false)
 
   const isEmailOrTestUser = (val: string) => {
     const v = val.trim().toLowerCase()
@@ -38,7 +36,6 @@ export function LoginPage() {
   const onSubmit = form.handleSubmit(async ({ email, password }) => {
     setBusy(true)
     setError(null)
-    setResent(false)
     const emailToUse =
       email.trim().toLowerCase() === 'user1'
         ? 'user1@ideamatch.com'
@@ -54,11 +51,6 @@ export function LoginPage() {
     }
   })
 
-  async function resend() {
-    await service.resendVerification(form.values.email)
-    setResent(true)
-  }
-
   return (
     <AuthLayout {...LOGIN_PANEL}>
       <h1 className="text-4xl font-bold tracking-tight">Inicia sesión</h1>
@@ -68,17 +60,21 @@ export function LoginPage() {
         {error && (
           <Alert tone="error">
             {error.message}
-            {error.code === 'EMAIL_NOT_VERIFIED' && !resent && !isApiEnabled() && (
+            {/* [HU02-FE] Cuenta pendiente: lleva a ingresar el código (ahí también se puede reenviar). */}
+            {error.code === 'EMAIL_NOT_VERIFIED' && (
               <>
                 {' '}
-                <button type="button" onClick={resend} className="font-semibold underline underline-offset-2">
-                  Reenviar e-mail de activación
-                </button>
+                <Link
+                  to="/verificar-correo"
+                  state={{ email: form.values.email.trim() } satisfies VerifyCodeState}
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Ingresar código de verificación
+                </Link>
               </>
             )}
           </Alert>
         )}
-        {resent && <Alert tone="success">Te enviamos un nuevo enlace de activación.</Alert>}
 
         <TextField
           label="Correo electrónico"
@@ -95,7 +91,9 @@ export function LoginPage() {
           autoComplete="current-password"
           placeholder="Ingresa tu contraseña"
           labelAction={
-            !isApiEnabled() && <Link to="/recuperar" className="text-sm font-semibold text-brand-700 hover:underline">¿Olvidaste tu contraseña?</Link>
+            <Link to="/recuperar" className="text-sm font-semibold text-brand-700 hover:underline">
+              ¿Olvidaste tu contraseña?
+            </Link>
           }
           {...form.field('password')}
         />

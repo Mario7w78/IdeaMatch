@@ -6,6 +6,8 @@ export interface AuthContextValue {
   loading: boolean
   service: AuthService
   login: (email: string, password: string) => Promise<Session>
+  /** [HU02] Verifica el correo con el código y deja la sesión iniciada. */
+  verifyEmailCode: (email: string, code: string) => Promise<Session>
   logout: () => Promise<void>
 }
 

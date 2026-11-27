@@ -1,6 +1,6 @@
 import { ArrowRight, MailCheck, Shield, User } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '../../components/ui/Alert'
 import { Button, ButtonLink } from '../../components/ui/Button'
 import { PasswordStrength } from '../../components/ui/PasswordStrength'
@@ -10,7 +10,7 @@ import { useForm } from '../../hooks/useForm'
 import { AuthLayout, FeatureList } from '../../layouts/AuthLayout'
 import { isValidEmail, isValidPassword, MESSAGES } from '../../lib/validation'
 import { AuthError } from '../../services/auth'
-import { isApiEnabled } from '../../services/http/apiClient'
+import type { VerifyCodeState } from './copy'
 
 const PANEL = {
   badge: 'ÚNETE A LA COMUNIDAD',
@@ -30,6 +30,7 @@ const PANEL = {
 
 export function RegisterPage() {
   const { service } = useAuth()
+  const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
@@ -54,8 +55,20 @@ export function RegisterPage() {
     setServerError(null)
     setEmailError(null)
     try {
-      await service.register({ firstName: v.firstName, lastName: v.lastName, email: v.email, password: v.password })
-      setRegisteredEmail(v.email.trim().toLowerCase())
+      const user = await service.register({
+        firstName: v.firstName,
+        lastName: v.lastName,
+        email: v.email,
+        password: v.password,
+      })
+      const email = v.email.trim().toLowerCase()
+      // [HU02-FE] Cuenta pendiente: se pide el código de 6 dígitos enviado al correo.
+      if (!user.verified) {
+        const state: VerifyCodeState = { email, registered: true }
+        navigate('/verificar-correo', { state })
+        return
+      }
+      setRegisteredEmail(email)
     } catch (e) {
       if (e instanceof AuthError && e.code === 'EMAIL_TAKEN_OR_INVALID') setEmailError(e.message)
       else setServerError(e instanceof Error ? e.message : 'No pudimos crear tu cuenta. Intenta de nuevo.')
@@ -67,7 +80,7 @@ export function RegisterPage() {
   if (registeredEmail) {
     return (
       <AuthLayout {...PANEL}>
-        <RegisterSuccess email={registeredEmail} onResend={() => service.resendVerification(registeredEmail)} />
+        <RegisterSuccess email={registeredEmail} />
       </AuthLayout>
     )
   }
@@ -161,36 +174,20 @@ export function RegisterPage() {
   )
 }
 
-function RegisterSuccess({ email, onResend }: { email: string; onResend: () => Promise<void> }) {
-  const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle')
+/** Solo si el backend no exige verificación (REQUIRE_EMAIL_VERIFICATION=false): la cuenta ya está activa. */
+function RegisterSuccess({ email }: { email: string }) {
   return (
     <div>
       <span className="grid size-14 place-items-center rounded-2xl bg-success-50 text-success-600">
         <MailCheck size={28} aria-hidden="true" />
       </span>
       <h1 className="mt-6 text-4xl font-bold tracking-tight">¡Tu cuenta fue creada!</h1>
-      <p className="mt-4 text-muted">{isApiEnabled()
-        ? <>La cuenta <strong className="text-ink">{email}</strong> está lista. Ya puedes iniciar sesión.</>
-        : <>Enviamos un enlace de activación a <strong className="text-ink">{email}</strong>. Ábrelo en las próximas 24 horas para verificar tu correo y poder iniciar sesión.</>}
+      <p className="mt-4 text-muted">
+        La cuenta <strong className="text-ink">{email}</strong> está lista. Ya puedes iniciar sesión.
       </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <ButtonLink to="/login" size="lg">
-          Ir a iniciar sesión
-        </ButtonLink>
-        {!isApiEnabled() && <Button
-          variant="secondary"
-          size="lg"
-          loading={state === 'sending'}
-          disabled={state === 'sent'}
-          onClick={async () => {
-            setState('sending')
-            await onResend()
-            setState('sent')
-          }}
-        >
-          {state === 'sent' ? 'Enlace reenviado' : 'Reenviar e-mail de activación'}
-        </Button>}
-      </div>
+      <ButtonLink to="/login" size="lg" className="mt-8">
+        Ir a iniciar sesión
+      </ButtonLink>
     </div>
   )
 }

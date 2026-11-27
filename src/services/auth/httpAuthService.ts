@@ -11,13 +11,13 @@ interface ApiUser {
   createdAt: string
 }
 
-const toUser = (u: ApiUser): User => ({
+/** El backend solo entrega sesión a cuentas ya verificadas; el registro indica si falta verificar. */
+const toUser = (u: ApiUser, verified = true): User => ({
   id: String(u.id),
   firstName: u.firstName,
   lastName: u.lastName,
   email: u.email,
-  // El backend no usa verificación por correo: la cuenta queda activa al registrarse.
-  verified: true,
+  verified,
   createdAt: u.createdAt,
   role: u.isAdmin ? 'admin' : 'user',
 })
@@ -29,6 +29,15 @@ function toAuthError(err: unknown): never {
     if (err.code === 'WEAK_PASSWORD')
       throw new AuthError('WEAK_PASSWORD', 'Usa al menos 8 caracteres, una mayúscula y un número.')
     if (err.code === 'INVALID_CREDENTIALS') throw new AuthError('INVALID_CREDENTIALS', 'Credenciales inválidas')
+    // [HU02] Cuenta pendiente: la UI ofrece ingresar el código enviado al correo.
+    if (err.code === 'EMAIL_NOT_VERIFIED')
+      throw new AuthError('EMAIL_NOT_VERIFIED', 'Tu cuenta aún no está verificada. Revisa tu correo e ingresa el código.')
+    if (err.code === 'ACCOUNT_DISABLED') throw new AuthError('ACCOUNT_DISABLED', err.message)
+    if (err.code === 'INVALID_CODE') {
+      const left = (err.details as { attemptsLeft?: unknown } | undefined)?.attemptsLeft
+      throw new AuthError('INVALID_CODE', 'El código no es válido o ya venció.', typeof left === 'number' ? left : undefined)
+    }
+    if (err.code === 'VALIDATION') throw new AuthError('INVALID_CODE', 'El código debe tener 6 dígitos.')
   }
   throw err
 }
@@ -41,13 +50,13 @@ export function createHttpAuthService(): AuthService {
   return {
     async register(input) {
       try {
-        // La cuenta queda activa, pero no se abre sesión: el usuario inicia sesión después.
-        const res = await apiRequest<{ user: ApiUser }>('/auth/register', {
+        // [HU01] La cuenta queda pendiente y el backend envía un código al correo; no abre sesión.
+        const res = await apiRequest<{ user: ApiUser; verificationRequired?: boolean }>('/auth/register', {
           method: 'POST',
           auth: false,
           body: input,
         })
-        return toUser(res.user)
+        return toUser(res.user, !res.verificationRequired)
       } catch (err) {
         toAuthError(err)
       }
@@ -91,16 +100,56 @@ export function createHttpAuthService(): AuthService {
     },
 
     async verifyEmail() {
+      // El backend verifica con código, no con enlace: ver verifyEmailCode.
       throw unsupported()
     },
-    async resendVerification() {
-      /* el backend no verifica correos */
+
+    async verifyEmailCode(email, code) {
+      try {
+        const res = await apiRequest<{ token: string; user: ApiUser }>('/auth/verify-email', {
+          method: 'POST',
+          auth: false,
+          body: { email: email.trim(), code: code.trim() },
+        })
+        tokenStore.set(res.token)
+        return { token: res.token, user: toUser(res.user) }
+      } catch (err) {
+        toAuthError(err)
+      }
     },
-    async requestPasswordReset() {
-      /* sin endpoint: respuesta genérica, como pide la HU4 */
+
+    async resendVerification(email) {
+      // 204 exista o no la cuenta; solo falla si el servicio de correo cae (502 EMAIL_SEND_FAILED).
+      await apiRequest<void>('/auth/resend-verification', {
+        method: 'POST',
+        auth: false,
+        body: { email: email.trim() },
+      })
     },
+    async requestPasswordReset(email) {
+      // [HU04] 204 exista o no la cuenta (no revela qué correos están registrados).
+      await apiRequest<void>('/auth/forgot-password', {
+        method: 'POST',
+        auth: false,
+        body: { email: email.trim() },
+      })
+    },
+
     async resetPassword() {
+      // El backend restablece con código, no con enlace: ver resetPasswordWithCode.
       throw unsupported()
+    },
+
+    async resetPasswordWithCode(email, code, newPassword) {
+      try {
+        await apiRequest<void>('/auth/reset-password', {
+          method: 'POST',
+          auth: false,
+          body: { email: email.trim(), code: code.trim(), newPassword },
+        })
+      } catch (err) {
+        toAuthError(err)
+      }
     },
   }
 }

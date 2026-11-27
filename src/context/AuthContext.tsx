@@ -34,6 +34,15 @@ export function AuthProvider({
     [service],
   )
 
+  const verifyEmailCode = useCallback(
+    async (email: string, code: string) => {
+      const s = await service.verifyEmailCode(email, code)
+      setSession(s)
+      return s
+    },
+    [service],
+  )
+
   const logout = useCallback(async () => {
     const current = session
     if (current) await service.logout(current.token)
@@ -44,8 +53,8 @@ export function AuthProvider({
   }, [service, session])
 
   const value = useMemo(
-    () => ({ session, loading, service, login, logout }),
-    [session, loading, service, login, logout],
+    () => ({ session, loading, service, login, verifyEmailCode, logout }),
+    [session, loading, service, login, verifyEmailCode, logout],
   )
 
   return <AuthContext value={value}>{children}</AuthContext>

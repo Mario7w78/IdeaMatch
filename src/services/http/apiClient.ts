@@ -62,8 +62,10 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
   const qs = params.toString()
   const url = `${API_URL}/api${path}${qs ? `?${qs}` : ''}`
 
+  // FormData (adjuntos): el navegador pone el Content-Type multipart con su boundary.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData
   const headers: Record<string, string> = { Accept: 'application/json' }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   const token = auth ? tokenStore.get() : null
   if (token) headers.Authorization = `Bearer ${token}`
 
@@ -72,7 +74,7 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     res = await fetch(url, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
       signal,
     })
   } catch {

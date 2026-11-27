@@ -52,6 +52,11 @@ export function DevMailbox() {
                   <p className="text-xs text-muted">Para: {m.to}</p>
                   <p className="mt-0.5 text-sm font-semibold">{m.subject}</p>
                   <p className="mt-1 text-xs text-muted">{m.body}</p>
+                  {m.code && (
+                    <p className="mt-2 font-mono text-lg font-bold tracking-[0.3em] text-ink" aria-label={`Código ${m.code}`}>
+                      {m.code}
+                    </p>
+                  )}
                   <Link
                     to={path}
                     onClick={() => setOpen(false)}

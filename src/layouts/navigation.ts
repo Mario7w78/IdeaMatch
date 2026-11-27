@@ -41,7 +41,6 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/app/mensajes',
     label: 'Mensajes',
     icon: MessageSquare,
-    sprint: 6,
     description: 'Conversa con tu equipo en un chat privado por proyecto.',
   },
   {

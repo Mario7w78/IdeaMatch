@@ -1,6 +1,6 @@
 import { ArrowLeft, User } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '../../components/ui/Alert'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/TextField'
@@ -8,33 +8,41 @@ import { useAuth } from '../../context/useAuth'
 import { useForm } from '../../hooks/useForm'
 import { AuthLayout } from '../../layouts/AuthLayout'
 import { isValidEmail, MESSAGES } from '../../lib/validation'
-import { GENERIC_RESET_MESSAGE, LOGIN_PANEL } from './copy'
+import { LOGIN_PANEL, type VerifyCodeState } from './copy'
 
 export function ForgotPasswordPage() {
   const { service } = useAuth()
+  const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const form = useForm({ email: '' }, (v) =>
     !v.email.trim() ? { email: MESSAGES.required } : !isValidEmail(v.email) ? { email: MESSAGES.email } : {},
   )
 
   const onSubmit = form.handleSubmit(async ({ email }) => {
     setBusy(true)
-    await service.requestPasswordReset(email)
-    setBusy(false)
-    setSent(true)
+    setError(null)
+    try {
+      // [HU04-FE] Respuesta genérica: la siguiente pantalla no revela si la cuenta existe.
+      await service.requestPasswordReset(email)
+      const state: VerifyCodeState = { email: email.trim().toLowerCase(), codeSent: true }
+      navigate('/restablecer', { state })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No pudimos enviar el código. Intenta de nuevo.')
+      setBusy(false)
+    }
   })
 
   return (
     <AuthLayout {...LOGIN_PANEL}>
       <h1 className="text-4xl font-bold tracking-tight">Recupera tu contraseña</h1>
       <p className="mt-4 text-muted">
-        Escribe el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña. El enlace vence en 1
-        hora.
+        Escribe el correo de tu cuenta y te enviaremos un código de 6 dígitos para crear una nueva contraseña. El código
+        vence en 15 minutos.
       </p>
 
       <form noValidate onSubmit={onSubmit} className="mt-8 space-y-5">
-        {sent && <Alert tone="success">{GENERIC_RESET_MESSAGE}</Alert>}
+        {error && <Alert tone="error">{error}</Alert>}
         <TextField
           label="Correo electrónico"
           icon={User}
@@ -44,7 +52,7 @@ export function ForgotPasswordPage() {
           {...form.field('email')}
         />
         <Button type="submit" size="lg" loading={busy} className="w-full">
-          {sent ? 'Reenviar enlace' : 'Enviar enlace'}
+          Enviar código
         </Button>
       </form>
 

@@ -7,6 +7,8 @@ export interface Mail {
   to: string
   subject: string
   body: string
+  /** Código de verificación, cuando el correo lo incluye. */
+  code?: string
   link: string
   sentAt: string
 }

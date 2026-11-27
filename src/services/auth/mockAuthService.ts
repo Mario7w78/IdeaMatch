@@ -21,6 +21,10 @@ interface StoredToken {
   userId: string
   expiresAt: number
   used: boolean
+  /** [HU02] Código de 6 dígitos que acompaña al enlace de verificación. */
+  code?: string
+  codeExpiresAt?: number
+  attempts?: number
 }
 
 interface StoredSession {
@@ -36,6 +40,9 @@ const KEYS = {
 
 export const VERIFY_TTL_MS = 24 * 60 * 60 * 1000
 export const RESET_TTL_MS = 60 * 60 * 1000
+/** Igual que el backend: el código vence a los 15 minutos y se invalida tras 5 intentos fallidos. */
+export const CODE_TTL_MS = 15 * 60 * 1000
+export const MAX_CODE_ATTEMPTS = 5
 
 export const SEED_USERS: StoredUser[] = [
   {
@@ -82,6 +89,8 @@ export interface MockAuthOptions {
 }
 
 const genericInvalid = () => new AuthError('INVALID_CREDENTIALS', 'Credenciales inválidas')
+const invalidCode = (attemptsLeft?: number) =>
+  new AuthError('INVALID_CODE', 'El código no es válido o ya venció.', attemptsLeft)
 const invalidToken = (type: TokenType) =>
   new AuthError(
     'INVALID_TOKEN',
@@ -99,6 +108,10 @@ async function sha256(text: string): Promise<string> {
 function randomToken(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(24))
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+function randomCode(): string {
+  return String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, '0')
 }
 
 function publicUser(u: StoredUser): User {
@@ -168,12 +181,13 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
     )
   }
 
-  function issueToken(type: TokenType, userId: string): string {
+  function issueToken(type: TokenType, userId: string, code?: string): string {
     const ttl = type === 'verify' ? VERIFY_TTL_MS : RESET_TTL_MS
     // Un token nuevo invalida los anteriores del mismo tipo.
     const rest = tokens().filter((t) => !(t.userId === userId && t.type === type))
     const token = randomToken()
-    write(KEYS.tokens, [...rest, { token, type, userId, expiresAt: now() + ttl, used: false }])
+    const extra = code ? { code, codeExpiresAt: now() + CODE_TTL_MS, attempts: 0 } : {}
+    write(KEYS.tokens, [...rest, { token, type, userId, expiresAt: now() + ttl, used: false, ...extra }])
     return token
   }
 
@@ -188,12 +202,30 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
     return found
   }
 
+  /** Valida y consume un código como el backend: cada fallo cuenta y al agotar los intentos se invalida. */
+  function consumeCode(email: string, type: TokenType, code: string): StoredUser {
+    const user = findByEmail(email)
+    const all = tokens()
+    const t = user && all.find((x) => x.userId === user.id && x.type === type && !x.used && x.code)
+    if (!user || !t || (t.codeExpiresAt ?? 0) < now()) throw invalidCode()
+    if (t.code !== code.trim()) {
+      const attempts = (t.attempts ?? 0) + 1
+      const left = Math.max(0, MAX_CODE_ATTEMPTS - attempts)
+      write(KEYS.tokens, all.map((x) => (x.token === t.token ? { ...x, attempts, used: left === 0 } : x)))
+      throw invalidCode(left)
+    }
+    write(KEYS.tokens, all.map((x) => (x.token === t.token ? { ...x, used: true } : x)))
+    return user
+  }
+
   function sendVerification(user: StoredUser) {
-    const token = issueToken('verify', user.id)
+    const code = randomCode()
+    const token = issueToken('verify', user.id, code)
     sendMail({
       to: user.email,
       subject: 'Activa tu cuenta de IdeaMatch',
-      body: `Hola ${user.firstName}, confirma tu correo para empezar. El enlace vence en 24 horas.`,
+      body: `Hola ${user.firstName}, tu código de verificación es ${code}. Vence en 15 minutos.`,
+      code,
       link: `${origin}/verificar/${token}`,
     })
   }
@@ -239,6 +271,15 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
       return publicUser(user)
     },
 
+    async verifyEmailCode(email, code) {
+      await wait()
+      const user = consumeCode(email, 'verify', code)
+      updateUser(user.id, { verified: true })
+      const session: StoredSession = { token: randomToken(), userId: user.id }
+      write(KEYS.session, session)
+      return { token: session.token, user: publicUser({ ...user, verified: true }) }
+    },
+
     async resendVerification(email) {
       await wait()
       const user = findByEmail(email)
@@ -261,7 +302,7 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
       if (!user.verified) {
         throw new AuthError(
           'EMAIL_NOT_VERIFIED',
-          'Tu cuenta aún no está verificada. Revisa tu correo para activarla.',
+          'Tu cuenta aún no está verificada. Revisa tu correo e ingresa el código.',
         )
       }
       const session: StoredSession = { token: randomToken(), userId: user.id }
@@ -290,11 +331,13 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
       await wait()
       const user = findByEmail(email)
       if (!user) return // Mensaje genérico en la UI: no se revela si la cuenta existe.
-      const token = issueToken('reset', user.id)
+      const code = randomCode()
+      const token = issueToken('reset', user.id, code)
       sendMail({
         to: user.email,
         subject: 'Restablece tu contraseña de IdeaMatch',
-        body: 'Recibimos una solicitud para cambiar tu contraseña. El enlace vence en 1 hora.',
+        body: `Recibimos una solicitud para cambiar tu contraseña. Tu código es ${code} y vence en 15 minutos.`,
+        code,
         link: `${origin}/restablecer/${token}`,
       })
     },
@@ -309,6 +352,19 @@ export function createMockAuthService(opts: MockAuthOptions = {}): AuthService {
       // Cerrar cualquier sesión abierta del usuario.
       const current = read<StoredSession | null>(KEYS.session, null)
       if (current?.userId === t.userId) storage.removeItem(KEYS.session)
+    },
+
+    async resetPasswordWithCode(email, code, newPassword) {
+      await wait()
+      // Como el backend: la fortaleza se valida antes de gastar un intento del código.
+      if (!isValidPassword(newPassword)) {
+        throw new AuthError('WEAK_PASSWORD', 'Usa al menos 8 caracteres, una mayúscula y un número.')
+      }
+      const user = consumeCode(email, 'reset', code)
+      // Si la cuenta estaba pendiente, recibir el código también confirma el correo.
+      updateUser(user.id, { passwordHash: await sha256(newPassword), verified: true })
+      const current = read<StoredSession | null>(KEYS.session, null)
+      if (current?.userId === user.id) storage.removeItem(KEYS.session)
     },
   }
 }
