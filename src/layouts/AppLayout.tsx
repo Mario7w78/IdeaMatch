@@ -1,6 +1,8 @@
-import { Bell, LogOut, Menu, Plus, Search, X } from 'lucide-react'
+import { LogOut, Menu, Plus, Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NotificationBell } from '../components/notifications/NotificationBell'
+import { useUnreadMessages } from '../hooks/useUnreadMessages'
 import { buttonClasses } from '../components/ui/buttonClasses'
 import { Logo } from '../components/ui/Logo'
 import { useAuth } from '../context/useAuth'
@@ -64,12 +66,7 @@ export function AppLayout() {
             />
           </label>
           <div className="ml-auto flex items-center gap-3 sm:gap-5">
-            <button
-              className="relative grid size-11 place-items-center rounded-xl border border-line bg-white text-ink hover:bg-surface"
-              aria-label="Notificaciones"
-            >
-              <Bell size={20} />
-            </button>
+            <NotificationBell />
             <Link to="/app/publicar" className={buttonClasses('primary', 'md', 'px-4!')}>
               <Plus size={20} aria-hidden="true" />
               <span className="hidden sm:inline">Publicar una idea</span>
@@ -89,6 +86,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { session, logout } = useAuth()
   const navigate = useNavigate()
   const [leaving, setLeaving] = useState(false)
+  const unreadMessages = useUnreadMessages()
   const user = session?.user
   const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : ''
 
@@ -119,6 +117,18 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               >
                 <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
                 {label}
+                {to === '/app/mensajes' && unreadMessages > 0 && (
+                  <>
+                    <span
+                      data-testid="messages-unread-badge"
+                      aria-hidden="true"
+                      className="ml-auto grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-brand-600 px-1.5 text-[11px] font-bold text-white"
+                    >
+                      {unreadMessages > 99 ? '99+' : unreadMessages}
+                    </span>
+                    <span className="sr-only">{`, ${unreadMessages} sin leer`}</span>
+                  </>
+                )}
               </NavLink>
             </li>
           ))}

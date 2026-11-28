@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ChatRoom } from '../../components/chat/ChatRoom'
 import { ConversationList } from '../../components/chat/ConversationList'
 import { useAuth } from '../../context/useAuth'
+import { notifyChatRead } from '../../hooks/useUnreadMessages'
 import { chatService, type ChatMessage, type ConversationSummary } from '../../services/chat'
 
 export const REVOKED_NOTICE = 'Ya no formas parte de este equipo'
@@ -85,6 +86,7 @@ export function MessagesPage() {
 
   const markRead = useCallback((convId: string) => {
     setConversations((list) => list.map((c) => (String(c.id) === String(convId) ? { ...c, unreadCount: 0 } : c)))
+    notifyChatRead()
   }, [])
 
   const revoked = useCallback(() => {
